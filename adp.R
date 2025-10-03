@@ -161,4 +161,4 @@ ggplot(adp_cumulative, aes(x = month, y = job_creation, group = year)) +
     plot.background = element_blank()
   )
 
-ggsave("us_job_creation_1.png", height = 6, width = 6.5)
+ggsave("adp.us_job_creation_1.png", height = 6, width = 6.5)
