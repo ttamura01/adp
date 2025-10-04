@@ -66,6 +66,13 @@ jobs %>%
   ggplot(aes(x = Spread)) + 
   geom_histogram(alpha = 0.3) +
   geom_density(colour = "red") +
+  geom_vline(xintercept = MEAN, colour = "green") +
+  geom_vline(xintercept = MEAN + SD, colour = "blue", linetype = "dashed") +
+  geom_vline(xintercept = MEAN - SD, colour = "blue", linetype = "dashed") +
+  geom_vline(xintercept = MEAN + 2*SD, colour = "blue", linetype = "dotted") +
+  geom_vline(xintercept = MEAN - 2*SD, colour = "blue", linetype = "dotted") +
+  annotate("text", 
+           x = as.numeric(mean(jobs$Spread)), y = 75, label = glue("mean\n{MEAN}")) +
   scale_x_log10() +
   labs(x = "Spread(million)",
        y = "Percentage")
@@ -81,9 +88,11 @@ jobs$spread
 
 summary(jobs$Spread) 
 
-sd(jobs$Spread) 
+SD = sd(jobs$Spread) 
 
-mean(jobs$Spread) 
+"+SD" = MEAN + SD
+
+MEAN <- round(mean(jobs$Spread), 3) 
 
 median(jobs$Spread)
 
@@ -159,7 +168,7 @@ ggplot(adp_cumulative, aes(x = month, y = job_creation, group = year)) +
     data = label_points,
     aes(label = year, color = line_type),
     hjust = -0.2, vjust = 0.5,
-    show.legend = FALSE, size = 6
+    show.legend = FALSE, size = 5
   ) +
   scale_x_discrete(expand = expansion(add = c(0.1, 1.5))) +
   scale_y_continuous(
@@ -178,12 +187,12 @@ ggplot(adp_cumulative, aes(x = month, y = job_creation, group = year)) +
     subtitle = "Cumulative job creation in 2025 is the lowest since 2010",
     x = NULL,
     y = "Cumulative Job Creation (x1,000)",
-    caption = "<i>FRED(Federal Reserve Economic Data)"
+    caption = "<i>ADP, FRED(Federal Reserve Economic Data), by Takayuki Tamura"
   ) +
   theme_classic() +
   theme(
     plot.title.position = "plot",
-    plot.title = element_textbox_simple(face = "bold", size = 16),
+    plot.title = element_textbox_simple(face = "bold", size = 14, margin = margin(t= 10, b =10)),
     plot.caption.position = "panel",
     plot.caption = element_markdown(),
     panel.background = element_blank(),
@@ -193,3 +202,5 @@ ggplot(adp_cumulative, aes(x = month, y = job_creation, group = year)) +
   )
 
 ggsave("adp.us_job_creation_1.png", height = 6, width = 6.5)
+
+
