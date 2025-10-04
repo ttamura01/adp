@@ -4,6 +4,7 @@ library(scales)
 library(sysfonts) 
 library(showtextdb) 
 library(showtext) 
+library(glue)
 library(ggtext)
 library(fredr)
 
@@ -20,26 +21,46 @@ adp <- fredr("ADPMNUSNERSA") %>%
 jobs <- nfp_data %>% 
   left_join(., adp, by = "date") %>% 
   filter(date >= "2010-01-01") %>% 
-  mutate(nfp_mil = nfp/1000, ner_mil = ner/1000) %>% 
-  select(date, nfp_mil, ner_mil) %>% 
-  mutate("spread" = nfp_mil - ner_mil) 
+  mutate("NFP" = nfp/1000, "ADP" = ner/1000) %>% 
+  select(date, NFP, ADP) %>% 
+  mutate("Spread" = NFP - ADP) 
 
 jobs %>% 
   pivot_longer(-date, names_to = "data", values_to = "us_jobs") %>% 
   ggplot(aes(x = date, y = us_jobs, colour = data)) + 
-  geom_line() 
+  geom_line() +
+  labs(x = NULL,
+       y = "US Non-farm Payroll(million)") +
+  theme(
+    legend.key = element_blank(),
+    legend.title = element_blank(),
+    legend.position = "top",
+    panel.background = element_blank()
+  )
 
-model <- lm(ner_mil ~ nfp_mil, data = jobs) 
+model <- lm(ADP ~ NFP, data = jobs) 
 
 summary(model) 
 coefficients <- coef(model) 
 intercept <- coefficients[1] 
-slope <- coefficients[2] 
-r.squared <- summary(model)$r.squared 
+slope <- round(coefficients[2],3 )
+r.squared <- round(summary(model)$r.squared, 3 )
+p-value <- summary(model)$p.value
 
 jobs %>% 
-  ggplot(aes(x = nfp_mil, y = ner_mil)) + 
-  geom_point() + geom_smooth(method = lm) 
+  ggplot(aes(x = NFP, y = ADP)) + 
+  geom_point() + geom_smooth(method = lm) + 
+  annotate("text", x = 135, y =130,
+           label = glue("y = x * {slope} \nr-squared = {r.squared}"), 
+           colour = "red", 
+           fontface = "italic",
+           hjust = 0) +
+  labs(x = "NFP(mill)",
+       y = "ADP(mill)") +
+  theme(
+    panel.background = element_blank()
+  )
+  
 
 jobs %>% 
   ggplot(aes(x = spread)) + 
@@ -67,6 +88,12 @@ adp <- adp %>%
   mutate(
          year = year(date),
          month = month(date, label = TRUE))
+
+# monthly data
+adp %>% 
+  mutate(monthly_change = c(NA, diff(ner))) %>% 
+  ggplot(aes(x = date, y = monthly_change)) +
+  geom_col()
 
 # Get December NFP of previous year for baseline
 dec_adp_prev_year <- adp %>%
