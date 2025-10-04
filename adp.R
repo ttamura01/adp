@@ -45,13 +45,13 @@ coefficients <- coef(model)
 intercept <- coefficients[1] 
 slope <- round(coefficients[2],3 )
 r.squared <- round(summary(model)$r.squared, 3 )
-p-value <- summary(model)$p.value
+"p-value" <- "< 2.2e-16"
 
 jobs %>% 
   ggplot(aes(x = NFP, y = ADP)) + 
   geom_point() + geom_smooth(method = lm) + 
   annotate("text", x = 135, y =130,
-           label = glue("y = x * {slope} \nr-squared = {r.squared}"), 
+           label = glue("y = x * {slope} \nr-squared = {r.squared}\np-value: < 2.2e-16"), 
            colour = "red", 
            fontface = "italic",
            hjust = 0) +
@@ -63,25 +63,29 @@ jobs %>%
   
 
 jobs %>% 
-  ggplot(aes(x = spread)) + 
-  geom_density() 
+  ggplot(aes(x = Spread)) + 
+  geom_histogram(alpha = 0.3) +
+  geom_density(colour = "red") +
+  scale_x_log10() +
+  labs(x = "Spread(million)",
+       y = "Percentage")
 
-jobs %>% arrange(spread) %>% 
+jobs %>% arrange(Spread) %>% 
   slice_tail(n = 10) 
 
 jobs %>% 
-  ggplot(aes(x = nfp_mil, y = spread)) + 
+  ggplot(aes(x = NFP, y = Spread)) + 
   geom_boxplot() 
 
 jobs$spread 
 
-summary(jobs$spread) 
+summary(jobs$Spread) 
 
-sd(jobs$spread) 
+sd(jobs$Spread) 
 
-mean(jobs$spread) 
+mean(jobs$Spread) 
 
-median(jobs$spread)
+median(jobs$Spread)
 
 # Load and prepare the full data
 adp <- adp %>%
