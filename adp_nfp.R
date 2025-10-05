@@ -40,9 +40,20 @@ mae <- mean(abs(test$err), na.rm = TRUE)
 rmse <- sqrt(mean(test$err^2, na.rm = TRUE))
 
 # 5) Plots (cleaned)
+# p1 <- jobs %>% 
+#   pivot_longer(c(NFP, ADP)) %>%
+#   mutate(data = factor(data, levels = c("NFP", "ADP"))) %>% 
+#   ggplot(aes(date, value, color = name)) +
+#   geom_line() +
+#   labs(y = "Employment (millions)", x = NULL, color = NULL) +
+#   theme_minimal()
+
 p1 <- jobs %>% 
-  pivot_longer(c(NFP, ADP)) %>%
-  ggplot(aes(date, value, color = name)) +
+  select(date, NFP, ADP, Spread) %>% 
+  drop_na() %>% 
+  pivot_longer(-date, names_to = "data", values_to = "us_jobs") %>% 
+  mutate(data = factor(data, levels = c("NFP", "ADP", "Spread"))) %>% 
+  ggplot(aes(x = date, y = us_jobs, colour = data)) +
   geom_line() +
   labs(y = "Employment (millions)", x = NULL, color = NULL) +
   theme_minimal()
