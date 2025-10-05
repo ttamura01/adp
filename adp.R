@@ -7,8 +7,11 @@ library(showtext)
 library(glue)
 library(ggtext)
 library(fredr)
+library(patchwork)
 
 fredr_set_key("0c5fd2514c7d98427fe3c931e2fcb244") 
+
+# Assess if the ADP's job-data can be an alternative of NFP by BLD
 
 # Overall unemployment 
 nfp_data <- fredr(series_id = "PAYEMS") %>% 
@@ -25,7 +28,7 @@ jobs <- nfp_data %>%
   select(date, NFP, ADP) %>% 
   mutate("Spread" = NFP - ADP) 
 
-jobs %>% 
+a <- jobs %>% 
   pivot_longer(-date, names_to = "data", values_to = "us_jobs") %>% 
   ggplot(aes(x = date, y = us_jobs, colour = data)) + 
   geom_line() +
@@ -47,7 +50,29 @@ slope <- round(coefficients[2],3 )
 r.squared <- round(summary(model)$r.squared, 3 )
 "p-value" <- "< 2.2e-16"
 
-jobs %>% 
+MIN <- summary(jobs$Spread)[1]
+FIRST_Qu <- summary(jobs$Spread)[2]
+Median <- round(summary(jobs$Spread)[3],3)
+Mean <- round(summary(jobs$Spread)[4], 3)
+THIRD_Qu <- summary(jobs$Spread)[5]
+MAX <- summary(jobs$Spread)[6]
+SD = round(sd(jobs$Spread), 3)
+
+annotation1 <- glue("min: {MIN}")
+annotation2 <- glue("1st Qu.: {FIRST_Qu}")
+annotation3 <- glue("median: {Median}")
+annotation4 <- glue("mean: {Mean}")
+annotation5 <- glue("3rd Qu: {THIRD_Qu}")
+annotation6 <- glue("max: {MAX}")
+annotation7 <- glue("sd: {SD}")
+
+# "+SD" = MEAN + SD
+
+MEAN <- round(mean(jobs$Spread), 3) 
+
+median(jobs$Spread)
+
+b <- jobs %>% 
   ggplot(aes(x = NFP, y = ADP)) + 
   geom_point() + geom_smooth(method = lm) + 
   annotate("text", x = 135, y =130,
@@ -61,8 +86,7 @@ jobs %>%
     panel.background = element_blank()
   )
   
-
-jobs %>% 
+c <- jobs %>% 
   ggplot(aes(x = Spread)) + 
   geom_histogram(alpha = 0.3) +
   geom_density(colour = "red") +
@@ -71,30 +95,68 @@ jobs %>%
   geom_vline(xintercept = MEAN - SD, colour = "blue", linetype = "dashed") +
   geom_vline(xintercept = MEAN + 2*SD, colour = "blue", linetype = "dotted") +
   geom_vline(xintercept = MEAN - 2*SD, colour = "blue", linetype = "dotted") +
-  annotate("text", 
+  annotate("text",
            x = as.numeric(mean(jobs$Spread)), y = 75, label = glue("mean\n{MEAN}")) +
+  annotate("text",
+           x = 13, y = 70,
+           label = glue("{annotation1}"), hjust = 0) +
+  annotate("text",
+           x = 13, y = 65,
+           label = glue("{annotation2}"), hjust = 0) +
+  annotate("text",
+           x = 13, y = 60,
+           label = glue("{annotation3}"), hjust = 0) +
+  annotate("text",
+           x = 13, y = 55,
+           label = glue("{annotation4}"), hjust = 0) +
+  annotate("text",
+           x = 13, y = 50,
+           label = glue("{annotation5}"), hjust = 0) +
+  annotate("text",
+           x = 13, y = 45,
+           label = glue("{annotation6}"), hjust = 0) +
+  annotate("text",
+           x = 13, y = 40,
+           label = glue("{annotation7}"), hjust = 0) +
   scale_x_log10() +
   labs(x = "Spread(million)",
-       y = "Percentage")
+       y = "Percentage") +
+  theme(
+    panel.background = element_blank()
+  )
 
 jobs %>% arrange(Spread) %>% 
   slice_tail(n = 10) 
 
-jobs %>% 
+d <- jobs %>% 
   ggplot(aes(x = NFP, y = Spread)) + 
-  geom_boxplot() 
+  geom_boxplot() +
+  theme(
+    panel.background = element_blank()
+  )
 
-jobs$spread 
+e <- jobs %>% 
+  mutate(NFP = case_when(
+    NFP < 140 ~ "1",
+    NFP >= 140 & NFP <= 150 ~ "2",
+    NFP > 150 ~ "3")
+  ) %>% 
+  ggplot(
+    aes(x = NFP, y = Spread)
+  ) +
+  geom_boxplot() +
+  scale_x_discrete (breaks = c(1, 2, 3),
+                     labels = c("~140mil", "140mil\n~ 150mil", "150mil~")) +
+  labs(y = "Spread(million)") + 
+  theme(
+    panel.background = element_blank(),
+    axis.line = element_line(),
+    axis.text = element_text(size = 14)
+  ) 
 
-summary(jobs$Spread) 
+(a+b)/(c+e)
 
-SD = sd(jobs$Spread) 
-
-"+SD" = MEAN + SD
-
-MEAN <- round(mean(jobs$Spread), 3) 
-
-median(jobs$Spread)
+ggsave("adp_nfp.png", width = 7.5, height = 6.3)
 
 # Load and prepare the full data
 adp <- adp %>%
