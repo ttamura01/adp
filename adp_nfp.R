@@ -74,7 +74,7 @@ p3 <- ggplot(jobs, aes(Spread)) +
   geom_histogram(aes(y = after_stat(density)), alpha = .3) +
   geom_density() +
   geom_vline(xintercept = mean(jobs$Spread), linetype = 2) +
-  labs(x = "NFP – ADP (thousand)", y = "Density") +
+  labs(x = "NFP – ADP (million)", y = "Density") +
   theme_minimal()
 
 p4 <- jobs %>%
